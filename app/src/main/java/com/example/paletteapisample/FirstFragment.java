@@ -10,18 +10,17 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.palette.graphics.Palette;
 
 import com.example.paletteapisample.databinding.FragmentFirstBinding;
@@ -72,13 +71,17 @@ public class FirstFragment extends Fragment {
             Bitmap bitmap;
             Context context = getContext();
 
+            if (context == null) {
+                return;
+            }
+
             try {
                 BufferedInputStream inputStream = new BufferedInputStream(
                     context.getContentResolver().openInputStream(data.getData())
                 );
                 bitmap = BitmapFactory.decodeStream(inputStream);
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                Log.e("onActivityResult", "error", e);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Error");
@@ -95,6 +98,8 @@ public class FirstFragment extends Fragment {
             }
 
             if (!BitmapValidator.isValidBitmap(bitmap)) {
+                Log.e("onActivityResult", "error", new Error("Invalid image file"));
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Error");
                 builder.setMessage("Invalid image file");
