@@ -3,6 +3,7 @@ package com.example.paletteapisample;
 import static android.app.Activity.RESULT_OK;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -24,6 +25,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.palette.graphics.Palette;
 
 import com.example.paletteapisample.databinding.FragmentFirstBinding;
+import com.google.android.flexbox.FlexboxLayout;
 
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
@@ -65,12 +67,16 @@ public class FirstFragment extends Fragment {
 
         if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
             ImageView imgView = binding.imageView;
-            BufferedInputStream inputStream = null;
-            Bitmap bitmap = null;
+            FlexboxLayout colors = binding.colors;
+            TextView result = binding.result;
+            Bitmap bitmap;
+            Context context = getContext();
+
             try {
-                inputStream = new BufferedInputStream(getContext().getContentResolver().openInputStream(data.getData()));
+                BufferedInputStream inputStream = new BufferedInputStream(
+                    context.getContentResolver().openInputStream(data.getData())
+                );
                 bitmap = BitmapFactory.decodeStream(inputStream);
-                imgView.setImageBitmap(bitmap);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
 
@@ -88,28 +94,10 @@ public class FirstFragment extends Fragment {
                 return;
             }
 
-            try {
-                binding.colors.removeAllViews();
-                binding.result.setText("");
-
-                UsePalette p = new UsePalette(bitmap);
-                List<Palette.Swatch> swatches = p.getColors();
-                for (Palette.Swatch swatch : swatches) {
-                    @ColorInt int color = swatch.getRgb();
-                    Button button = new Button(getContext());
-                    button.setText(String.valueOf(swatch.getPopulation()));
-                    button.setTextColor(swatch.getTitleTextColor());
-                    button.setBackgroundColor(color);
-                    binding.colors.addView(button);
-
-                    binding.result.append(swatch.toString() + ",\n");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-
+            if (!BitmapValidator.isValidBitmap(bitmap)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Error");
-                builder.setMessage(e.toString());
+                builder.setMessage("Invalid image file");
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         // User taps OK button.
@@ -119,6 +107,22 @@ public class FirstFragment extends Fragment {
                 dialog.show();
 
                 return;
+            }
+
+            imgView.setImageBitmap(bitmap);
+            colors.removeAllViews();
+            result.setText("");
+
+            UsePalette palette = new UsePalette(bitmap);
+            List<Palette.Swatch> swatches = palette.getColors();
+            for (Palette.Swatch swatch : swatches) {
+                @ColorInt int color = swatch.getRgb();
+                Button button = new Button(getContext());
+                button.setText(String.valueOf(swatch.getPopulation()));
+                button.setTextColor(swatch.getTitleTextColor());
+                button.setBackgroundColor(color);
+                colors.addView(button);
+                result.append(swatch.toString() + ",\n");
             }
         }
     }
